@@ -5,6 +5,7 @@ import MongoDB from '../services/MongoDB.mjs';
 
 import {
   PORT_DNS,
+  HOST_IP,
 } from '../config.mjs';
 
 export default class DNSServer {
@@ -28,6 +29,73 @@ export default class DNSServer {
           return send(response);
         }
 
+        // Answer A containarr.me
+        if (question.type === dns2.Packet.TYPE.A && question.name === 'containarr.me') {
+          response.answers.push({
+            name: question.name,
+            type: dns2.Packet.TYPE.A,
+            class: dns2.Packet.CLASS.IN,
+            ttl: 60,
+            address: HOST_IP,
+          });
+          return send(response);
+        }
+
+        // Answer NS containarr.me
+        if (question.type === dns2.Packet.TYPE.NS && question.name === 'containarr.me') {
+          response.answers.push({
+            name: question.name,
+            type: dns2.Packet.TYPE.NS,
+            class: dns2.Packet.CLASS.IN,
+            ttl: 60,
+            ns: 'ns1.containarr.me',
+          });
+          return send(response);
+        }
+
+        // Answer A ns1.containarr.me
+        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns1.containarr.me') {
+          response.answers.push({
+            name: question.name,
+            type: dns2.Packet.TYPE.A,
+            class: dns2.Packet.CLASS.IN,
+            ttl: 60,
+            address: HOST_IP,
+          });
+          return send(response);
+        }
+
+        // Answer A ns2.containarr.me
+        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns2.containarr.me') {
+          response.answers.push({
+            name: question.name,
+            type: dns2.Packet.TYPE.A,
+            class: dns2.Packet.CLASS.IN,
+            ttl: 60,
+            address: HOST_IP,
+          });
+          return send(response);
+        }
+
+        // Answer SOA containarr.me
+        if (question.type === dns2.Packet.TYPE.SOA && question.name === 'containarr.me') {
+          response.answers.push({
+            name: question.name,
+            type: dns2.Packet.TYPE.SOA,
+            class: dns2.Packet.CLASS.IN,
+            ttl: 60,
+            primary: 'ns1.containarr.me',
+            admin: 'admin.containarr.me',
+            serial: 1,
+            refresh: 3600,
+            retry: 600,
+            expiration: 604800,
+            minimum: 60,
+          });
+          return send(response);
+        }
+
+        // Answer A and AAAA questions for <hostname>.containarr.me
         if (question.type !== dns2.Packet.TYPE.A) {
           response.header.rcode = dns2.Packet.RCODE.NOTIMP;
           return send(response);
