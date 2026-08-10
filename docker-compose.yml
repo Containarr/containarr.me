@@ -1,0 +1,27 @@
+services:
+  containarr.me:
+    container_name: containarr.me
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/containarr
+      - PORT_HTTP=8000
+      - PORT_DNS=5300
+    ports:
+      - 5300:5300/udp
+      - 8000:8000/tcp
+    volumes:
+      - ./server:/app
+    tty: true
+
+  mongodb:
+    container_name: containarr-mongodb
+    hostname: mongodb
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./volumes/mongodb:/data/db
+    attach: false

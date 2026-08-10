@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "start": "DEBUG=HTTPServer,DNSServer,MongoDB node --watch server.mjs"
+  },
+  "dependencies": {
+    "debug": "^4.4.3",
+    "dns2": "^3.1.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.1"
+  }
+}
