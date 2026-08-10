@@ -29,13 +29,11 @@ export default class DNSServer {
           return send(response);
         }
 
-        const name = question.name.toLowerCase().replace(/\.$/, '');
-
         // This server is authoritative for containarr.me
         response.header.aa = 1;
 
         // Answer A containarr.me
-        if (question.type === dns2.Packet.TYPE.A && name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && question.name === 'containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.A,
@@ -48,7 +46,7 @@ export default class DNSServer {
         }
 
         // Answer NS containarr.me
-        if (question.type === dns2.Packet.TYPE.NS && name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.NS && question.name === 'containarr.me') {
           response.answers.push(
             {
               name: question.name,
@@ -70,7 +68,7 @@ export default class DNSServer {
         }
 
         // Answer A ns1.containarr.me
-        if (question.type === dns2.Packet.TYPE.A && name === 'ns1.containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns1.containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.A,
@@ -83,7 +81,7 @@ export default class DNSServer {
         }
 
         // Answer A ns2.containarr.me
-        if (question.type === dns2.Packet.TYPE.A && name === 'ns2.containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns2.containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.A,
@@ -96,7 +94,7 @@ export default class DNSServer {
         }
 
         // Answer SOA containarr.me
-        if (question.type === dns2.Packet.TYPE.SOA && name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.SOA && question.name === 'containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.SOA,
