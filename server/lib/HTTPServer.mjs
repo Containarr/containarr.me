@@ -32,6 +32,10 @@ export default class HTTPServer {
       res.redirect('https://containarr.com');
     });
 
+    this.app.get('/health', (req, res) => {
+      res.status(200).send('OK');
+    });
+
     this.app.put('/api/v1/record', async (req, res) => {
       if (typeof req.body !== 'object') {
         return res.status(401).json({ error: 'Missing Body' });
