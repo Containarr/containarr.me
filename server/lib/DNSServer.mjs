@@ -29,8 +29,13 @@ export default class DNSServer {
           return send(response);
         }
 
+        const name = question.name.toLowerCase().replace(/\.$/, '');
+
+        // This server is authoritative for containarr.me
+        response.header.aa = 1;
+
         // Answer A containarr.me
-        if (question.type === dns2.Packet.TYPE.A && question.name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && name === 'containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.A,
@@ -38,23 +43,34 @@ export default class DNSServer {
             ttl: 60,
             address: HOST_IP,
           });
+
           return send(response);
         }
 
         // Answer NS containarr.me
-        if (question.type === dns2.Packet.TYPE.NS && question.name === 'containarr.me') {
-          response.answers.push({
-            name: question.name,
-            type: dns2.Packet.TYPE.NS,
-            class: dns2.Packet.CLASS.IN,
-            ttl: 60,
-            ns: 'ns1.containarr.me',
-          });
+        if (question.type === dns2.Packet.TYPE.NS && name === 'containarr.me') {
+          response.answers.push(
+            {
+              name: question.name,
+              type: dns2.Packet.TYPE.NS,
+              class: dns2.Packet.CLASS.IN,
+              ttl: 60,
+              ns: 'ns1.containarr.me',
+            },
+            {
+              name: question.name,
+              type: dns2.Packet.TYPE.NS,
+              class: dns2.Packet.CLASS.IN,
+              ttl: 60,
+              ns: 'ns2.containarr.me',
+            }
+          );
+
           return send(response);
         }
 
         // Answer A ns1.containarr.me
-        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns1.containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && name === 'ns1.containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.A,
@@ -62,11 +78,12 @@ export default class DNSServer {
             ttl: 60,
             address: HOST_IP,
           });
+
           return send(response);
         }
 
         // Answer A ns2.containarr.me
-        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns2.containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && name === 'ns2.containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.A,
@@ -74,24 +91,29 @@ export default class DNSServer {
             ttl: 60,
             address: HOST_IP,
           });
+
           return send(response);
         }
 
         // Answer SOA containarr.me
-        if (question.type === dns2.Packet.TYPE.SOA && question.name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.SOA && name === 'containarr.me') {
           response.answers.push({
             name: question.name,
             type: dns2.Packet.TYPE.SOA,
             class: dns2.Packet.CLASS.IN,
             ttl: 60,
+
             primary: 'ns1.containarr.me',
             admin: 'admin.containarr.me',
-            serial: 1,
+
+            serial: 2026081001,
+
             refresh: 3600,
             retry: 600,
             expiration: 604800,
             minimum: 60,
           });
+
           return send(response);
         }
 
