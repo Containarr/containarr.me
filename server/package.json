@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "DEBUG=HTTPServer,DNSServer,MongoDB node --watch server.mjs"
+    "start": "DEBUG=HTTPServer,DNSServer,MongoDB node server.mjs",
+    "serve": "DEBUG=HTTPServer,DNSServer,MongoDB node --watch server.mjs"
   },
   "dependencies": {
     "debug": "^4.4.3",
