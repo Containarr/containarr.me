@@ -122,7 +122,7 @@ export default class DNSServer {
         }
 
         const { name } = question;
-        const hostnameMatch = name.match(/^(?<hostname>[a-f0-9]{16})\.containarr\.me$/);
+        const hostnameMatch = name.match(/^(?:[^.]+\.)?(?<hostname>[a-f0-9]{16})\.containarr\.me$/);
         if (!hostnameMatch) {
           response.header.rcode = dns2.Packet.RCODE.NXDOMAIN;
           return send(response);
