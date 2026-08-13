@@ -8,6 +8,20 @@ import {
   HOST_IP,
 } from '../config.mjs';
 
+const SOA_RECORD = {
+  name: 'containarr.me',
+  type: dns2.Packet.TYPE.SOA,
+  class: dns2.Packet.CLASS.IN,
+  ttl: 60,
+  primary: 'ns1.containarr.me',
+  admin: 'admin.containarr.me',
+  serial: 2026081301,
+  refresh: 3600,
+  retry: 600,
+  expiration: 604800,
+  minimum: 60,
+};
+
 export default class DNSServer {
 
   debug = debug('DNSServer');
@@ -15,6 +29,7 @@ export default class DNSServer {
   constructor() {
     this.server = dns2.createServer({
       udp: true,
+      tcp: true,
       handle: (request, send, rinfo) => {
         if (request.errors.length) {
           const response = dns2.Packet.createResponseFromRequest(request);
@@ -28,6 +43,7 @@ export default class DNSServer {
           response.header.rcode = dns2.Packet.RCODE.FORMERR;
           return send(response);
         }
+        const name = question.name.toLowerCase();
 
         // This server is authoritative for containarr.me
         response.header.aa = 1;
@@ -36,17 +52,18 @@ export default class DNSServer {
         if (
           question.type === dns2.Packet.TYPE.CAA
           && (
-            question.name === 'containarr.me'
-            || question.name.endsWith('.containarr.me')
+            name === 'containarr.me'
+            || name.endsWith('.containarr.me')
           )
         ) {
+          response.authorities.push({ ...SOA_RECORD });
           return send(response);
         }
 
         // Answer A containarr.me
-        if (question.type === dns2.Packet.TYPE.A && question.name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && name === 'containarr.me') {
           response.answers.push({
-            name: question.name,
+            name,
             type: dns2.Packet.TYPE.A,
             class: dns2.Packet.CLASS.IN,
             ttl: 60,
@@ -57,17 +74,17 @@ export default class DNSServer {
         }
 
         // Answer NS containarr.me
-        if (question.type === dns2.Packet.TYPE.NS && question.name === 'containarr.me') {
+        if (question.type === dns2.Packet.TYPE.NS && name === 'containarr.me') {
           response.answers.push(
             {
-              name: question.name,
+              name,
               type: dns2.Packet.TYPE.NS,
               class: dns2.Packet.CLASS.IN,
               ttl: 60,
               ns: 'ns1.containarr.me',
             },
             {
-              name: question.name,
+              name,
               type: dns2.Packet.TYPE.NS,
               class: dns2.Packet.CLASS.IN,
               ttl: 60,
@@ -79,9 +96,9 @@ export default class DNSServer {
         }
 
         // Answer A ns1.containarr.me
-        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns1.containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && name === 'ns1.containarr.me') {
           response.answers.push({
-            name: question.name,
+            name,
             type: dns2.Packet.TYPE.A,
             class: dns2.Packet.CLASS.IN,
             ttl: 60,
@@ -92,9 +109,9 @@ export default class DNSServer {
         }
 
         // Answer A ns2.containarr.me
-        if (question.type === dns2.Packet.TYPE.A && question.name === 'ns2.containarr.me') {
+        if (question.type === dns2.Packet.TYPE.A && name === 'ns2.containarr.me') {
           response.answers.push({
-            name: question.name,
+            name,
             type: dns2.Packet.TYPE.A,
             class: dns2.Packet.CLASS.IN,
             ttl: 60,
@@ -105,34 +122,24 @@ export default class DNSServer {
         }
 
         // Answer SOA containarr.me
-        if (question.type === dns2.Packet.TYPE.SOA && question.name === 'containarr.me') {
-          response.answers.push({
-            name: question.name,
-            type: dns2.Packet.TYPE.SOA,
-            class: dns2.Packet.CLASS.IN,
-            ttl: 60,
-
-            primary: 'ns1.containarr.me',
-            admin: 'admin.containarr.me',
-
-            serial: 2026081001,
-
-            refresh: 3600,
-            retry: 600,
-            expiration: 604800,
-            minimum: 60,
-          });
+        if (question.type === dns2.Packet.TYPE.SOA && name === 'containarr.me') {
+          response.answers.push({ ...SOA_RECORD });
 
           return send(response);
         }
 
-        // Answer A and AAAA questions for <hostname>.containarr.me
-        if (question.type !== dns2.Packet.TYPE.A) {
-          response.header.rcode = dns2.Packet.RCODE.NOTIMP;
+        // Return authoritative NODATA for record types these static names do not have
+        if (
+          [
+            'containarr.me',
+            'ns1.containarr.me',
+            'ns2.containarr.me',
+          ].includes(name)
+        ) {
+          response.authorities.push({ ...SOA_RECORD });
           return send(response);
         }
 
-        const name = question.name.toLowerCase();
         const hostnameMatch = name.match(/^(?:[^.]+\.)?(?<hostname>[a-f0-9]{16})\.containarr\.me$/);
         if (!hostnameMatch) {
           response.header.rcode = dns2.Packet.RCODE.NXDOMAIN;
@@ -150,7 +157,7 @@ export default class DNSServer {
               return send(response);
             }
 
-            if (record.ipv4) {
+            if (question.type === dns2.Packet.TYPE.A && record.ipv4) {
               response.answers.push({
                 name,
                 type: dns2.Packet.TYPE.A,
@@ -160,7 +167,7 @@ export default class DNSServer {
               });
             }
 
-            if (record.ipv6) {
+            if (question.type === dns2.Packet.TYPE.AAAA && record.ipv6) {
               response.answers.push({
                 name,
                 type: dns2.Packet.TYPE.AAAA,
@@ -171,7 +178,7 @@ export default class DNSServer {
             }
 
             if (response.answers.length === 0) {
-              response.header.rcode = dns2.Packet.RCODE.NXDOMAIN;
+              response.authorities.push({ ...SOA_RECORD });
             }
 
             return send(response);
@@ -191,11 +198,14 @@ export default class DNSServer {
       udp: {
         port: PORT_DNS,
       },
+      tcp: {
+        port: PORT_DNS,
+      },
     });
 
     this.server.on('listening', () => {
-      const { udp } = this.server.addresses();
-      this.debug(`Listening on ${udp.address}:${udp.port}`);
+      const { udp, tcp } = this.server.addresses();
+      this.debug(`Listening on UDP ${udp.address}:${udp.port}, TCP ${tcp.address}:${tcp.port}`);
     });
 
     this.server.on('close', () => {
