@@ -32,6 +32,27 @@ export default class DNSServer {
         // This server is authoritative for containarr.me
         response.header.aa = 1;
 
+        // Allow Let's Encrypt to issue certificates for containarr.me and its subdomains
+        if (
+          question.type === dns2.Packet.TYPE.CAA
+          && (
+            question.name === 'containarr.me'
+            || question.name.endsWith('.containarr.me')
+          )
+        ) {
+          response.answers.push({
+            name: question.name,
+            type: dns2.Packet.TYPE.CAA,
+            class: dns2.Packet.CLASS.IN,
+            ttl: 60,
+            flags: 0,
+            tag: 'issue',
+            value: 'letsencrypt.org',
+          });
+
+          return send(response);
+        }
+
         // Answer A containarr.me
         if (question.type === dns2.Packet.TYPE.A && question.name === 'containarr.me') {
           response.answers.push({
