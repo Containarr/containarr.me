@@ -32,7 +32,7 @@ export default class DNSServer {
         // This server is authoritative for containarr.me
         response.header.aa = 1;
 
-        // Allow Let's Encrypt to issue certificates for containarr.me and its subdomains
+        // No CAA policy: any certificate authority may issue after validation
         if (
           question.type === dns2.Packet.TYPE.CAA
           && (
@@ -40,16 +40,6 @@ export default class DNSServer {
             || question.name.endsWith('.containarr.me')
           )
         ) {
-          response.answers.push({
-            name: question.name,
-            type: dns2.Packet.TYPE.CAA,
-            class: dns2.Packet.CLASS.IN,
-            ttl: 60,
-            flags: 0,
-            tag: 'issue',
-            value: 'letsencrypt.org',
-          });
-
           return send(response);
         }
 
