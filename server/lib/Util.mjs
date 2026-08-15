@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 export default class Util {
 
   static validateSignature({
-    timestamp,
+    data,
     publicKey,
     signature,
   }) {
@@ -13,11 +13,11 @@ export default class Util {
       type: 'spki',
     });
 
-    const isValid = crypto.verify(null, Buffer.from(`${timestamp}`), {
+    const isValid = crypto.verify(null, Buffer.from(data), {
       key: publicKey,
       format: 'der',
       type: 'spki',
-    }, signature);
+    }, Buffer.from(signature, 'base64url'));
 
     const fingerprint = crypto.createHash('sha256')
       .update(publicKey.export({
