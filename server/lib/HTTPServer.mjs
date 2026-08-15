@@ -194,14 +194,27 @@ export default class HTTPServer {
         new Promise(resolve => {
           const request = http.request({
             hostname,
-            method: 'HEAD',
+            method: 'GET',
             path: '/',
           }, response => {
-            response.resume();
-            resolve({
-              reachable: true,
-              statusCode: response.statusCode ?? null,
-              error: null,
+            let body = '';
+            response.setEncoding('utf8');
+            response.on('data', chunk => {
+              body += chunk;
+            });
+            response.on('end', () => {
+              const reachable = response.statusCode >= 200
+                && response.statusCode < 300
+                && body.trim() === expectedTarget;
+              resolve({
+                reachable,
+                statusCode: response.statusCode ?? null,
+                error: reachable
+                  ? null
+                  : /^[a-f0-9]{16}\.containarr\.me$/.test(body.trim())
+                    ? `Reached ${body.trim()}, not ${expectedTarget}.`
+                    : 'Response is not this Containarr installation.',
+              });
             });
           });
 
@@ -216,16 +229,29 @@ export default class HTTPServer {
         new Promise(resolve => {
           const request = https.request({
             hostname,
-            method: 'HEAD',
+            method: 'GET',
             path: '/',
             servername: hostname,
             rejectUnauthorized: false,
           }, response => {
-            response.resume();
-            resolve({
-              reachable: true,
-              statusCode: response.statusCode ?? null,
-              error: null,
+            let body = '';
+            response.setEncoding('utf8');
+            response.on('data', chunk => {
+              body += chunk;
+            });
+            response.on('end', () => {
+              const reachable = response.statusCode >= 200
+                && response.statusCode < 300
+                && body.trim() === expectedTarget;
+              resolve({
+                reachable,
+                statusCode: response.statusCode ?? null,
+                error: reachable
+                  ? null
+                  : /^[a-f0-9]{16}\.containarr\.me$/.test(body.trim())
+                    ? `Reached ${body.trim()}, not ${expectedTarget}.`
+                    : 'Response is not this Containarr installation.',
+              });
             });
           });
 
