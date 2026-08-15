@@ -189,30 +189,11 @@ export default class HTTPServer {
         };
       }
 
-      if (!dnsResult.configured) {
-        return res.status(200).json({
-          hostname,
-          expectedTarget,
-          dns: dnsResult,
-          http: {
-            reachable: false,
-            statusCode: null,
-            error: 'CNAME is not configured.',
-          },
-          https: {
-            reachable: false,
-            statusCode: null,
-            error: 'CNAME is not configured.',
-          },
-        });
-      }
-
       // Check whether the installation is reachable over HTTP and HTTPS
       const [httpResult, httpsResult] = await Promise.all([
         new Promise(resolve => {
           const request = http.request({
-            hostname: expectedTarget,
-            headers: { Host: hostname },
+            hostname,
             method: 'HEAD',
             path: '/',
           }, response => {
@@ -234,8 +215,7 @@ export default class HTTPServer {
         }),
         new Promise(resolve => {
           const request = https.request({
-            hostname: expectedTarget,
-            headers: { Host: hostname },
+            hostname,
             method: 'HEAD',
             path: '/',
             servername: hostname,
